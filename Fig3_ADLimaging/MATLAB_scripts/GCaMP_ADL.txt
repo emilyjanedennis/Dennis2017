@@ -1,0 +1,207 @@
+function [deltaFtotal1,time,Isub1total,totaltime,Fmean1,Fse1,filenames] = GCaMP_BMA_Xinfinal_IAA(strain)
+
+filenames = dir;
+keep = [];
+for m=1:length(filenames)
+    test = filenames(m,1).name;
+    if (length(test) > 10) && (strcmp(test(length(test)-2:end), 'txt') == 1)...
+            && (strcmp(test(length(test)-10:end), 'notrack.txt') == 0)
+        keep = [keep m];
+    end
+end
+
+filenames = filenames(keep);
+d = length(filenames);
+
+deltaFtotal1 = zeros(10000,d);
+deltaFtotaln1 = zeros(10000,d);  %#ok<*NASGU>
+totaltime = zeros(10000,d);
+totaldye = zeros(10000,d);
+Isub1total=[];
+
+for m=1:d
+    [deltaF1,Isub1,x1,time,dye] = GCaMP_ImageJ_Single(filenames(m,1).name); %#ok<*ASGLU>
+    if strfind(filenames(m,1).name,'trimmed')
+        deltaFtotal1(1:length(deltaF1),m) = deltaF1;
+        Isub1total(1:length(deltaF1),m) = Isub1; 
+    totaltime(1:length(time),m) = time;
+    end
+end
+
+deltaFtotal1 = trim(deltaFtotal1,1);
+Isub1total = trim(Isub1total,1);
+totaltime = trim(totaltime,1);
+
+
+%get rid of nan
+deltaFtotal1(isnan(deltaFtotal1)) = 0;
+Isub1total(isnan(Isub1total)) = 0;
+
+%save these deltaF/F values as deltaFFtotal
+deltaFFtotal1 = deltaFtotal1;
+
+% min max normalization to generate deltaF/Fmax
+for i=1:size(deltaFtotal1,2)
+        deltaFtotal1(:,i) = deltaFtotal1(:,i)./repmat(nanmax(deltaFtotal1(:,i)),length(time),1);
+end
+
+smoothF = deltaFtotal1;
+smoothFF = deltaFFtotal1;
+smooth2F = deltaFtotal1;
+smooth2FF = deltaFFtotal1;
+
+% smooth
+sm = 10;
+
+    for an=1:size(deltaFtotal1,2)
+        smoothF(:,an)=smooth(deltaFtotal1(:,an),sm); %smooths trace by binning
+        smoothFF(:,an)=smooth(deltaFFtotal1(:,an),sm); %smooths trace by binning
+        smooth2F(:,an)=smooth(deltaFtotal1(:,an),5); %smooths trace by binning
+        smooth2FF(:,an)=smooth(deltaFFtotal1(:,an),5); %smooths trace by binning
+    end
+
+
+Fmean1 = nanmean(deltaFtotal1');
+Fse1 = ste(deltaFtotal1');
+FFmean1 = nanmean(deltaFFtotal1');
+FFse1 = ste(deltaFFtotal1');
+
+
+% export deltaF/Fmax as .csv
+csvwrite('res1_smooth5F.csv',smoothF)
+
+
+% %---------%
+% % Figures %
+% %---------%
+
+
+clims = [.1 1];
+
+
+k=1;
+figure(k);
+subplot(3,1,1);
+Fm1 = isfinite(Fmean1(1,:));
+Fs1 = isfinite(Fse1(1,:));
+Fm2 = Fmean1(1,Fm1);
+Fs2 = Fse1(1,Fs1);
+minaxis = nanmin(Fm2) - nanmax(Fs2);
+maxaxis = nanmax(Fm2) + nanmax(Fs2);
+range = maxaxis - minaxis;
+minaxis = minaxis - 0.05*range;
+maxaxis = maxaxis + 0.05*range;
+
+for block = 1:3
+     rectangle('Position',[block*40-10,-0.5,20,1.5],'FaceColor',[0.8 0.8 0.8],'LineStyle','none')
+end
+hold on
+axis([10 150 -0.5 1]);
+jbfill(time',Fmean1+Fse1,Fmean1-Fse1,'b');
+hold on
+plot(time,Fmean1,'b-','LineWidth',1);
+xlabel('soma Time (seconds)','FontSize',14);
+ylegend = 'dF/F %)';
+ylabel(ylegend, 'FontSize',14);
+title(strain, 'FontSize',14);
+hold off;
+
+
+
+k=k+1;
+
+hold off;
+
+
+figure(k);
+Fm1 = isfinite(Fmean1(1,:));
+Fs1 = isfinite(Fse1(1,:));
+Fm2 = Fmean1(1,Fm1);
+Fs2 = Fse1(1,Fs1);
+minaxis = nanmin(Fm2) - nanmax(Fs2);
+maxaxis = nanmax(Fm2) + nanmax(Fs2);
+range = maxaxis - minaxis;
+minaxis = minaxis - 0.05*range;
+maxaxis = maxaxis + 0.05*range;
+
+for block = 1:3
+    rectangle('Position',[block*40-10,minaxis,20,maxaxis-minaxis],'FaceColor',[0.8 0.8 0.8],'LineStyle','none')
+end
+hold on
+jbfill(time',Fmean1+Fse1,Fmean1-Fse1,'b');
+hold on
+plot(time,Fmean1,'b-','LineWidth',1);
+axis([10 time(end) minaxis maxaxis]);
+xlabel('cell Time (seconds)','FontSize',14);
+ylegend = 'dF/Fmax';
+ylabel(ylegend, 'FontSize',14);
+title(strain, 'FontSize',14);
+saveas(k,[strain,'_FoverFmax’],’jpg');
+k=k+1;
+
+hold off;
+% %------------%
+% % Individual %
+% %------------%
+
+figure(k);
+p=1;
+for m=1:d
+    subplot(2,2,p)
+    minaxis = nanmin(deltaFtotal1);
+    m1 = isfinite(minaxis(1,:));
+    minaxis = min(minaxis(1,m1));
+    maxaxis = nanmax((nanmax(deltaFtotal1)));
+    m1 = isfinite(maxaxis(1,:));
+    maxaxis = max(maxaxis(1,m1));
+    range = maxaxis - minaxis;
+    minaxis = minaxis - 0.05*range;
+    maxaxis = maxaxis + 0.05*range;
+    
+    for block = 1:3
+        rectangle('Position',[block*40-10,minaxis,20,maxaxis-minaxis],'FaceColor',[0.8 0.8 0.8],'LineStyle','none')
+    end
+    hold on
+    plot(time,deltaFtotal1(:,m),'b-','LineWidth',1);
+    hold on
+    axis([0 time(end) minaxis maxaxis]);
+    box on
+    xlabel('Time (seconds)','FontSize',8);
+    ylegend = 'dF/F)';
+    ylabel(ylegend, 'FontSize',8);
+    title(filenames(m,1).name,'Interpreter','none','FontSize',8);
+    hold off
+
+    p=p+1;
+    if p > 4 && m < d
+        k=k+1;
+        figure(k);
+        p=1;
+    end
+
+    if m==d
+        k=k+1;
+    end
+
+end
+
+figure(k);
+p=1;
+
+
+figure(k);
+p=1;
+    p=p+1;
+    if p > 4 && m < d
+
+        k=k+1;
+        figure(k);
+        p=1;
+    end
+
+    if m==d
+
+           k=k+1;
+    end
+
+end

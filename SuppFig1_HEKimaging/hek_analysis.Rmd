@@ -1,0 +1,143 @@
+---
+title: "HEK data"
+author: "Emily Jane Dennis"
+date: "6/26/2017"
+output: pdf_document
+linkcolor: red
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Background
+The purpose of this experiment was to see if mis-expressing _str-217_ in another cell is able to confer DEET sensitivity. 
+
+## Why didn't we mis-express _str-217_ in another _C. elegans_ neuron?
+
+We were interested in mis-expressing _str-217_ in another _C. elegans_ neuron but __the neurons we tested (ASH and AWC) both responded to DEET.__ 
+
+## How did we choose these concentrations?
+
+We did a previous HEK experiment with low concentrations of DEET that saw no response. 
+
+__We wanted to ensure that we know DEET is being delivered to the cells__, since there are no obvious positive controls (receptors that respond well directly to DEET and are easy to express in HEK cells) we came up with an alternate set of experimental conditions to bias us toward seeing a response and gathering convincing negative data.
+
+Our solution to this problem was to try to see non-specific responses to DEET by using extremely high doses (160mM).
+
+
+all concentrations listed lowest to highest
+
+__% DMSO__  | __% DEET__    | __mM DEET__
+------------| ------------- | -------------
+0.00011     | 0.000094      | 0.0049
+0.00022     | 0.000187      | 0.0098
+0.00044     | 0.000374      | 0.0195
+0.00088     | 0.000749      | 0.0391
+0.00176     | 0.001497      | 0.0781
+0.00352     | 0.002994      | 0.1563
+0.00703     | 0.005989      | 0.3125
+0.01406     | 0.011978      | 0.6250
+0.02813     | 0.023956      | 1.25
+0.05265     | 0.047911      | 2.5
+0.1125      | 0.095822      | 5
+0.225       | 0.191644      | 10
+0.45        | 0.383289      | 20
+0.9         | 0.766577      | 40
+1.8         | 1.533154      | 80
+3.6         | 3.066309      | 160
+
+
+# Data analysis
+first, consider running R checkpoint to make sure all packages are of the version that works with this document and these data
+
+checkpoint('2017-06-27')
+
+and using R version 3.3.2 (2016-10-31)
+
+then, load all packages required
+```{r one,message=FALSE}
+
+library(reshape)
+library(reshape2)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(multcompView)
+library(car)
+```
+
+then load these data, format into separate data frames, and compute summary data
+```{r two}
+
+hek <- read.csv('hek_data.csv')
+hek <- hek[,2:17]
+heklong <- melt(hek, id.vars=c('expt','transfected','added','mM'),variable.name='replicant',value.name='value')
+
+str <- subset(heklong,expt=='str')
+
+strlong <- ddply(str,c("transfected","added","mM"),summarise,mean=mean(value,na.rm=TRUE),sd=sd(value,na.rm=TRUE),N=length(value),se=(sd/(sqrt(N))))
+
+strvar <- strlong
+strvar$mM <- log10(strvar$mM)
+strvar$mpe <- strvar$mean+strvar$se
+strvar$mme <- strvar$mean-strvar$se
+
+```
+
+plot the _str-217_ data and no receptor controls as mean (dot) +/- standard error of the mean (vertical line) at each point in the dose response curve
+
+'blank' here is a dose response curve of DMSO, the solvent used to make a dilution DEET before adding to the columns. At each point, the same concentration of DMSO is present in both the DEET condition and the blank condition.
+
+```{r plot0}
+ggplot(strlong,aes(x=log10(mM),y=mean,color=added)) + 
+geom_point() +
+facet_grid(~transfected,scale='free') +
+geom_segment(aes(x=strvar$mM,xend=strvar$mM,y=strvar$mme,yend=strvar$mpe)) +
+theme_tufte(ticks=FALSE) + 
+labs(y="Max Ratio") + 
+theme(axis.line.x = element_line(),axis.line.y = element_line()) + 
+ylim(1,6)
+  
+
+```
+from these data, we conclude that _str-217_ does not confer any DEET sensitivity to HEK cells. We can also see that DEET has a non-specific effect at very high doses ()
+
+The results were immiediately obvious, but we wanted to quantify these data a little further to be able to make a claim that DEET is 'working' in this assay. We note that pulling out a single data point has caveats and there may be stronger statistical approaches.
+
+For further analysis, __we chose 5mM DEET because__ it is ~.1% DEET. The next highest dose is 10mM and is ~.19% DEET, so __5mM is closest to the dose we used in behavior (0.15%) without being over__.
+
+We considered looking at the highest concentration to also be able to say that DEET has a non-specific effect at the higest doses, but felt this was unncessary.
+
+```{r plot2prep}
+
+str5 <- subset(str,mM==5)
+str5 <- str5[complete.cases(str5),]
+str5 <- subset(str5,added!='blank')
+str5summary <- ddply(str5,c('transfected'),summarize,mean=mean(value),sd=sd(value),N=length(value),se=(sd/(sqrt(N))))
+str5summary$mpe <- str5summary$mean+str5summary$se
+str5summary$mme <- str5summary$mean-str5summary$se
+
+qqPlot(str5$value)
+hist(str5$value)
+#although the histogram is a little skewed, these data look normal enough to perform a t test
+
+str5receptor <- subset(str5,transfected=='str217')
+str5noreceptor <- subset(str5,transfected=='noreceptor')
+  
+t.test(str5receptor$value,str5noreceptor$value)
+
+```
+
+```{r plot2}
+ggplot(str5,aes(x=transfected,y=value)) + 
+geom_jitter(width=0.2,height=0) + 
+geom_point(data=str5summary,aes(x=transfected,y=mme),shape=3) + geom_point(data=str5summary,aes(x=transfected,y=mpe),shape=3)  + geom_point(data=str5summary,aes(x=transfected,y=mean),shape=4) + 
+ylim(1,6) + 
+facet_grid(~added,scale='free')+
+theme_tufte(ticks=FALSE) +
+labs(y="Max Ratio") + 
+theme(axis.line.x = element_line(),axis.line.y = element_line())
+
+```

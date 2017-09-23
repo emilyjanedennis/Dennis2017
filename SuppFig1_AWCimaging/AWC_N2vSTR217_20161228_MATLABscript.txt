@@ -1,0 +1,57 @@
+N2=DEET20160813_Protocol3;
+N2=[N2 N2_DEET20160929_Protocol3];
+N2=[N2 N2_DEET20160930_Protocol3_1];
+N2=[N2 N2_DEET20160930_Protocol3_2];
+STR217=STR217_DEET20160929_Protocol3;
+STR217=[STR217 STR217_DEET20160930_Protocol3];
+STR217=[STR217 STR217_DEET20160930_Protocol3_2];
+
+NormN2=[];NormSTR217=[];SmoothN2=[];SmoothSTR217=[];
+for m=1:size(N2,2)
+    F01=nanmean([nanmean(N2(880:900,m)) nanmean(N2(1780:1800,m)) nanmean(N2(2680:2700,m))]);
+    NormN2(:,m)=100*((N2(:,m)-F01)/(F01));
+    SmoothN2(:,m)=smooth(NormN2(:,m),5);
+end
+for m=1:size(STR217,2)
+    F01=nanmean([nanmean(STR217(880:900,m)) nanmean(STR217(1780:1800,m)) nanmean(STR217(2680:2700,m))]);
+    NormSTR217(:,m)=100*((STR217(:,m)-F01)/(F01));
+    SmoothSTR217(:,m)=smooth(NormSTR217(:,m),5);
+end
+
+%Find means and standard errors
+MeanN2=nanmean(NormN2');
+SteN2=ste(NormN2');
+MeanSTR217=nanmean(NormSTR217');
+SteSTR217=ste(NormSTR217');
+SmoothMeanN2=nanmean(SmoothN2');
+SmoothSteN2=ste(SmoothN2');
+SmoothMeanSTR217=nanmean(SmoothSTR217');
+SmoothSteSTR217=ste(SmoothSTR217');
+
+%plot averages together of SMOOTHED
+time=1:21599;figure;hold on;
+rectangle('Position',[3900,-50,3900,600],'FaceColor','k','LineStyle','none');hold on;
+rectangle('Position',[7800,-50,6600,600],'FaceColor','c','LineStyle','none');hold on;
+rectangle('Position',[14400,-50,3900,600],'FaceColor','k','LineStyle','none');hold on;highlight2;
+jbfill(time, SmoothMeanSTR217+SmoothSteSTR217, SmoothMeanSTR217-SmoothSteSTR217,'m','m','',0.5);hold on;
+jbfill(time, SmoothMeanN2+SmoothSteN2, SmoothMeanN2-SmoothSteN2,'g','g','',0.5);hold on;
+plot(time,SmoothMeanSTR217,'r');hold on;
+plot(time,SmoothMeanN2,'b');hold on;
+title('Smoothed Normalized0 Protocol 3 for N2 (blue) and str-217 (red), averaged');hold on;axis([0 21599 -50 550]);
+
+N2BeforeDEET=[];N2DEETon=[];N2DuringDEET=[];N2AfterDEET=[];
+str217BeforeDEET=[];str217DEETon=[];str217DuringDEET=[];str217AfterDEET=[];
+
+time=601;
+for m=1:size(NormN2,2)
+    N2BeforeDEET(:,m)=mean(prctile(NormN2(5680:5700,m),5))-mean(NormN2(5380:5400));
+    N2DEETon(:,m)=prctile(NormN2(7800:8100,m),99)-mean(NormN2(7780:7800));
+    N2DuringDEET(:,m)=mean(prctile(NormN2(9580:9600,m),5))-mean(NormN2(9280:9600,m));
+    N2AfterDEET(:,m)=mean(prctile(NormN2(16180:16200,m),5))-mean(NormN2(15880:15900,m));
+end
+for m=1:size(NormSTR217,2)
+    str217BeforeDEET(:,m)=mean(prctile(NormSTR217(5680:5700,m),5))-mean(NormSTR217(5380:5400));
+    str217DEETon(:,m)=prctile(NormSTR217(7800:8100,m),99)-mean(NormSTR217(7780:7800));
+    str217DuringDEET(:,m)=mean(prctile(NormSTR217(9580:9600,m),5))-mean(NormSTR217(9280:9600,m));
+    str217AfterDEET(:,m)=mean(prctile(NormSTR217(16180:16200,m),5))-mean(NormSTR217(15880:15900,m));
+end

@@ -1,0 +1,54 @@
+function [Xbc] = bleachcorrect(X,startL,endL)
+
+%takes the average of the beginning and end and makes them equal, linearly leveling the trace in between.
+%X is the input trace, can be a column or row vector. startL and endL
+%specify how many frames to take for the averages.
+%of X. 
+
+frames = length(X);
+startfrag = (X(10:startL));
+startsort = sort(startfrag);
+startmins = startsort(1:startL-11);
+startM = nanmean(startmins);
+endfrag = (X(length(X)-endL:end));
+endsort = sort(endfrag);
+endmins = endsort(1:endL);
+endM = nanmean(endmins);
+% startM = nanmean(X(1:startL));
+% endM = nanmean(X((frames-endL+1):frames));
+middle = X(startL+1:frames-endL);
+[x y] = size(middle);
+if x>y
+   n = x;
+else 
+   n = y;
+end
+
+multiples = [1:n];
+if x>y
+    multiples = multiples';
+end
+
+if startM~=endM
+    increment = (startM-endM)/n;   
+elseif startM==endM
+    increment = 0;
+end
+
+correction = multiples.*increment;
+max_correction = correction(n);
+middlebc = middle + correction;
+
+Xbc(startL+1: frames-endL) = middlebc;
+Xbc(1:startL) = X(1:startL);
+Xbc((frames-endL+1):frames) = X((frames-endL+1):frames)+ max_correction;
+
+
+
+
+
+
+       
+    
+
+
