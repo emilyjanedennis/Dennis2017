@@ -13,7 +13,7 @@ for m=1:length(Isub1)
     end
 end
 
-Isub1 = bleachcorrect(Isub1, 200,400);
+Isub1 = bleachcorrect(Isub1, 100,200);
 k=sort(Isub1);
 F01 = nanmean(k(1:76)); % lowest 5%
 deltaF1=((Isub1-F01)/F01)*100;

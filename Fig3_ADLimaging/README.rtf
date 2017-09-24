@@ -1,0 +1,139 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red77\green77\blue77;\red0\green0\blue0;\red77\green77\blue77;
+}
+{\*\expandedcolortbl;;\csgray\c37475;\csgenericrgb\c0\c0\c0;\csgray\c37475;
+}
+\margl1440\margr1440\vieww13040\viewh8800\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 This folder Contains all data and scripts needed to replicate the plots presented in Dennis et al 2017. \
+\
+
+\b FOLDERS AND THEIR CONTENTS:
+\b0 \
+
+\b Fig3_ADLimaging\cf2 \
+\cf3 	
+\b0 Dennis2017_imaginganalysis.pdf	\cf2 	output of Dennis2017_imaginganalysis.Rmd\
+\cf3 	Dennis2017_imaginganalysis.Rmd	\cf2 makes all plots and statistics for ADL imaging data used in the manuscript including a separate control experiment completed to demonstrate that ethanol solvent alone cannot explain the responses to C9 nor DEET.\cf3 \
+	Dennis2017_plot-rawdata.pdf	\cf2 	output of Dennis2017_plot-rawdata.Rmd\
+\cf3 	Dennis2017_plot-rawdata.Rmd	\cf2 	plots all ImageJ-generated .txt files (before bleach-correct or deltaF/Fmax calculation). \
+	
+\b c9adl
+\b0 		Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single wild type animal given pulses of 100nM C9 (in 0.15% ethanol) at 30-50s, 70-90s, and 110-130s\
+	
+\b c9mut
+\b0 		Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single str-217-/- mutant animal given pulses of 100nM C9 (in 0.15% ethanol) at 30-50s, 70-90s, and 110-130s\
+	
+\b c9res
+\b0 		Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single str-217-/- mutant animal expressing str-217 under the ADL-specific srh-220 promoter, given pulses of 100nM C9 (in 0.15% ethanol) at 30-50s, 70-90s, and 110-130s\
+	
+\b pt0adl
+\b0 		Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single wild type animal given pulses of 0.15% ethanol solvent at 30-50s, 70-90s, and 110-130s\
+	
+\b pt0mut
+\b0 	Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single mutant animal given pulses of 0.15% ethanol solvent at 30-50s, 70-90s, and 110-130s\
+	
+\b pt0res
+\b0 	Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single str-217-/- mutant animal expressing str-217 under the ADL-specific srh-220 promoter, given pulses of 0.15% ethanol at 30-50s, 70-90s, and 110-130s\
+	
+\b pt15adl
+\b0 	Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single wild type animal given pulses of 0.15% DEET (in 0.15% ethanol solvent) at 30-50s, 70-90s, and 110-130s\
+	
+\b pt15mut
+\b0 	Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single wild type animal given pulses of 0.15% DEET (in 0.15% ethanol solvent) at 30-50s, 70-90s, and 110-130s\
+	
+\b pt15res
+\b0 	Contains individual ImageJ-generated files reflecting fluorescence changes in a single ADL neuron over the course of a single experiment on a single wild type animal given pulses of 0.15% DEET (in 0.15% ethanol solvent) at 30-50s, 70-90s, and 110-130s\
+	
+\b smoothed_dfoverfmax	\
+			
+\b0 Contains a .csv file for each genotype/treatment combination. Each file Contains MATLAB-generated deltaF/Fmax values for each animal. These files are used by Dennis2017_imaginganalysis.Rmd\
+	
+\b ImageJ_scripts
+\b0 	\
+			Contains two macros used to trim original tiff stacks (remove light pre-exposure) and to track neurons and calculate fluorescence changes over time.\
+	
+\b MATLAB_scripts	\
+			
+\b0 Contains all MATLAB scripts used to analyze ImageJ-generated txt files and generate bleach-corrected deltaF/Fmax values. The \'91master\'92 script is GCaMP_ADL and requires the rest of the scripts to run properly.\
+\cf0 	\
+	\
+
+\b Fig3_Cell-identification	
+\b0 performed by Xin Jin
+\b \
+	
+\b0 mutantstr-217_w1_L4_lv50ms.zvi		\cf2 Contains the .zvi file used to generate the composite image in Figure 3a\
+\cf0 	\
+
+\b Fig4_Tracking-and-Optogenetics	\
+
+\b0 \cf4 Contains all .csv files needed to plot all tracking and optogenetics pausing behavior data in Figure 4\
+\cf3 	figure4_reachr.pdf	\cf4 	Output of figure4_reachr.Rmd\
+\cf3 	figure4_reachr.Rmd		\cf4 Plots all ontogenetic data and statistics\
+\cf3 	figure4_tracking.pdf	\cf4 	Output of figure4_tracking.Rmd\
+\cf3 	figure4_tracking.Rmd\cf4 	Plots all  tracking data and statistics
+\b \cf0 \
+	\
+Figs1-3_Behavior
+\b0 \
+	Dennis_DEETandCelegans_behaviordata.csv	\cf2 Actual data needed for plotting\cf0 \
+	elegans_output.pdf		\cf2 Output of the .Rmd script	\cf0 \
+	elegans_output.Rmd	\cf2 R markdown script\
+\cf0 \
+
+\b SuppFig1_AWCimaging	
+\b0 performed by May Dobosiewicz
+\b \
+	
+\b0 AWC_response_mags	\cf4 All response magnitudes used by .Rmd file, originally generated by the MATLAB script\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\b \cf0 	
+\b0 N2_forplot			\cf4 Smoothed frame-by-frame values for plotting traces\
+
+\b \cf0 	
+\b0 str217_forplot		\cf4 Smoothed frame-by-frame values for plotting traces\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf4 	\cf0 AWC_response_mags_rawdata	\
+					\cf4 All files used by MATLAB script in one xlsx file
+\b \cf0 \
+	
+\b0 AWC_N2vSTR217_20161228_MATLABscript.txt	\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 					\cf4 Contains MATLAB script used to generate response magnitudes\
+\cf0 	responsemags.pdf		\cf4 Output of responsemags.Rmd	\cf0 \
+	responsemags.Rmd		\cf4 Plots all response magnitudes and smoothed traces\
+
+\b \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 SuppFig1_HEKimaging	
+\b0 performed by Laura Duvall
+\b \
+
+\b0 	hek_data.csv				\cf4 Data used by .Rmd file, from the HEK mis-expression experiments\cf0 \
+	Dennis2017_HEK_protocol.pdf	\cf4 Detailed protocol used to generate these data\cf0 \
+	hek_analysis_output.pdf		\cf4 Output of hek_analysis_output.Rmd\cf0 \
+	hek_analysis_output.Rmd		\cf4 Plots HEK mis-expression data\cf0 \
+\
+
+\b OTHER FILES:
+\b0 \
+Dennis2017_master.xlsx\cf2 \
+	Contains all data necessary for plotting in a multi-sheet excel file\cf0 \
+Strains.xlsx\cf2 \
+	Contains all strain data for any C. elegans strains generated for or used in this manuscript.\cf0 \
+Strains.PDF\cf2 \
+	Contains all strain data for any C. elegans strains generated for or used in this manuscript.\cf0 \
+README.txt\
+\
+\
+\
+Notes: \cf2 \
+	All R scripts were tested and run in RStudio, using R version 3.3.1 (2016-10-31), Sincere Pumpkin Patch on a x86_64-apple-darwin13.4.0\
+\
+	All MATLAB scripts were tested and run on Matlab version 2014b. Additional scripts for analysis of tracking information can be found in Cho et al. \'93Parallel encoding of sensory history and behavioral preference during Caenorhabditis elegans olfactory learning\'94 eLife 2016. doi: 10.7554/eLife.14000\
+\
+	All ImageJ scripts were tested and run with ImageJ 1.48v, Java 1.6.0_65 (32-bit)}
