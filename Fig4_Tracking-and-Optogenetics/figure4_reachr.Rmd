@@ -10,12 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ##Purpose:
-To plot all single animal tracking data for the manuscript.
+To plot all single animal tracking data for the optogenetics experiments in the manuscript.
 
 ##Background:
-This is an R Markdown document. [See here for more details on using R Markdown](http://rmarkdown.rstudio.com). I also found [this site](http://rmarkdown.rstudio.com/authoring_basics.html ) was useful for learning basic formatting with Markdown. I also enjoyed [this site](http://seananderson.ca/2013/10/19/reshape.html) when learning how to use reshape and when learning how to tidy data in general.
+This is an R Markdown document. [See here for more details on using R Markdown](http://rmarkdown.rstudio.com). I also found [this site](http://rmarkdown.rstudio.com/authoring_basics.html ) was useful for learning basic formatting with Markdown. I also enjoyed [this site](http://seananderson.ca/2013/10/19/reshape.html) when learning how to use reshape and when learning how to reorganize my data in general.
 
-The code required to get these graphs is in the gray boxes, along with information on how to run the statistical tests reported in the paper and any plots that were used to determine if these statistical tests were generally appropriate.
+The commands required to produce these graphs is in the gray boxes, along with information on how to run the statistical tests reported in the paper and any plots that were used to determine if these statistical tests were generally appropriate.
 
 This was run in RStudio, using R version 3.3.1 (2016-10-31), Sincere Pumpkin Patch on a x86_64-apple-darwin13.4.0
 
@@ -111,6 +111,7 @@ frabove <- subset(above3sdofmean,treatment=='FR')
 
 
 ###plotting the histograms of all pauses
+Pauses from ADL::ReaChR animals fed retinal overnight are in red. Vertical lines indicate group means. 
 ```{r histogramofpauses}
 
 ggplot(fronsort,aes(x=log((len)))) + 
@@ -135,46 +136,46 @@ levels(dfforplot$lightlist) <- c('OFF','ON')
 
 levels(dfforplot$treatment) <- c('ADL::ReaChR + retinal','ADL::ReaChR - retinal','wild type + retinal','wild type - retinal')
 
-testcastnow <- dcast(dfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+casteddfforplot <- dcast(dfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
 
-testcastnow$geno <- testcastnow$treatment
-testcastnow$ret <- testcastnow$treatment
-levels(testcastnow$geno) <- c('reachr','reachr','wildtype','wildtype')
-levels(testcastnow$ret) <- c('retinal','noretinal','retinal','noretinal')
+casteddfforplot$geno <- casteddfforplot$treatment
+casteddfforplot$ret <- casteddfforplot$treatment
+levels(casteddfforplot$geno) <- c('reachr','reachr','wildtype','wildtype')
+levels(casteddfforplot$ret) <- c('retinal','noretinal','retinal','noretinal')
 
 
 
-testmeltnow <- melt(testcastnow,id.vars=c('treatment','datelist'),variable.name='lightlist',value.name='len')
+melteddfforplot <- melt(casteddfforplot,id.vars=c('treatment','datelist'),variable.name='lightlist',value.name='len')
 
-testcastnow$diff <- testcastnow$ON-testcastnow$OFF
+casteddfforplot$diff <- casteddfforplot$ON-casteddfforplot$OFF
 
-summarycast <- ddply(testcastnow,.(treatment),summarize,mean=mean(diff),sd=sd(diff),N=length(diff),se=sd(diff)/(sqrt(N)),mep=mean+se,mem=mean-se)
+summarycast <- ddply(casteddfforplot,.(treatment),summarize,mean=mean(diff),sd=sd(diff),N=length(diff),se=sd(diff)/(sqrt(N)),mep=mean+se,mem=mean-se)
 
-testcastnewst <- dcast(testmeltnow,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
-testcastnewst$x = c(rep('OFF',length(testcastnewst$OFF)))
-testcastnewst$xend = c(rep('ON',length(testcastnewst$ON)))
+recasteddfforplot <- dcast(melteddfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+recasteddfforplot$x = c(rep('OFF',length(recasteddfforplot$OFF)))
+recasteddfforplot$xend = c(rep('ON',length(recasteddfforplot$ON)))
 ```
 
 ```{r statstoplot}
 
-leveneTest(diff~geno*ret,data=testcastnow)
+leveneTest(diff~geno*ret,data=casteddfforplot)
 
-toadd <- 1-min(testcastnow$diff)
-testcastnow$tnsl <- testcastnow$diff+toadd
-bcr <- boxcox(tnsl~geno*ret,data=testcastnow)
+toadd <- 1-min(casteddfforplot$diff)
+casteddfforplot$tnsl <- casteddfforplot$diff+toadd
+bcr <- boxcox(tnsl~geno*ret,data=casteddfforplot)
 
 #round up to nearest 0.5
 lambdar <- 0.5
-testcastnow$difflambdar <- testcastnow$tnsl^lambdar
-leveneTest(difflambdar~geno*ret,data=testcastnow)
+casteddfforplot$difflambdar <- casteddfforplot$tnsl^lambdar
+leveneTest(difflambdar~geno*ret,data=casteddfforplot)
 
-#rounding to the tails of the 95% confidence interval when lambda is near 0 is 
+#rounding to the tails of the 95% confidence interval because lambda is near 0, compensates for heterogeneity
 
-reachrtukey <- TukeyHSD(aov(difflambdar~geno*ret,data=testcastnow))
+reachrtukey <- TukeyHSD(aov(difflambdar~geno*ret,data=casteddfforplot))
 reachrtukey.levels <- reachrtukey$`geno:ret`[,4]
 
 
-reachrstatstoplot <- ddply(testcastnow,.(geno,ret,treatment),summarize,median=median(difflambdar),N=length(difflambdar),sd=sd(difflambdar),error=(qnorm(0.975)*sd/sqrt(N)),cim=median-error,cip=median+error)
+reachrstatstoplot <- ddply(casteddfforplot,.(geno,ret,treatment),summarize,median=median(difflambdar),N=length(difflambdar),sd=sd(difflambdar),error=(qnorm(0.975)*sd/sqrt(N)),cim=median-error,cip=median+error)
 
 ```
 
@@ -184,33 +185,33 @@ levels(dfforplot$lightlist) <- c('OFF','ON')
 
 levels(dfforplot$treatment) <- c('ADL::ReaChR + retinal','ADL::ReaChR - retinal','wild type + retinal','wild type - retinal')
 
-testcastnow <- dcast(dfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+casteddfforplot <- dcast(dfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
 
-testmeltnow <- melt(testcastnow,id.vars=c('treatment','datelist'),variable.name='lightlist',value.name='len')
+melteddfforplot <- melt(casteddfforplot,id.vars=c('treatment','datelist'),variable.name='lightlist',value.name='len')
 
-testcastnow$diff <- testcastnow$ON-testcastnow$OFF
+casteddfforplot$diff <- casteddfforplot$ON-casteddfforplot$OFF
 
-summarycast <- ddply(testcastnow,.(treatment),summarize,mean=mean(diff),sd=sd(diff),N=length(diff),se=sd(diff)/(sqrt(N)),mep=mean+se,mem=mean-se)
+summarycast <- ddply(casteddfforplot,.(treatment),summarize,mean=mean(diff),sd=sd(diff),N=length(diff),se=sd(diff)/(sqrt(N)),mep=mean+se,mem=mean-se)
 
-testcastnewst <- dcast(testmeltnow,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
-testcastnewst$x = c(rep('OFF',length(testcastnewst$OFF)))
-testcastnewst$xend = c(rep('ON',length(testcastnewst$ON)))
+recasteddfforplot <- dcast(melteddfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+recasteddfforplot$x = c(rep('OFF',length(recasteddfforplot$OFF)))
+recasteddfforplot$xend = c(rep('ON',length(recasteddfforplot$ON)))
 ```
 
 
-###here I plotted the difference in mean length of pauses first, and computed summary statistics on those data, and then also showed the data 'blown apart' into light on and light off data
+###here I plotted the ON and OFF mean pause lengths separately with lines connected between means taken from the same plate. I then took the differences between these means to produce a single number (increase/decrease in pause length) which corrects for the baseline differences between plates/animals/days/treatments, and ran summary statistics on the differences.
 ```{r plotofdiffs}
 
-ggplot(testcastnewst,aes(x=x,y=(OFF/3))) + 
+ggplot(recasteddfforplot,aes(x=x,y=(OFF/3))) + 
   geom_segment(aes(x=x,xend=xend,y=(OFF/3),yend=(ON/3))) +
-  geom_point(data=testmeltnow,aes(x=lightlist,y=(len/3))) + 
+  geom_point(data=melteddfforplot,aes(x=lightlist,y=(len/3))) + 
   theme_tufte() + 
   facet_grid(~treatment)+ 
   ylab("Mean pause length (seconds)")+ 
   xlab("Light conditions") + 
   ylim(0,15)
 
-ggplot(testcastnow,aes(x=treatment,y=diff)) + 
+ggplot(casteddfforplot,aes(x=treatment,y=diff)) + 
   geom_jitter(width=0.2,height=0) + 
   theme_tufte() + 
   geom_point(data=summarycast,aes(x=treatment,y=mean),shape='-') + 
@@ -218,7 +219,7 @@ ggplot(testcastnow,aes(x=treatment,y=diff)) +
   geom_point(data=summarycast,aes(x=treatment,y=mean-se),shape='-') + 
   ylab("Mean differences in pause length (seconds)")+ 
   xlab("treatment and genotype of animals tested") + 
-  ggtitle("Stimulation with light increases pause lengths in animals \n expressing ReaChR in ADL and fed retinal overnight ") + 
+  ggtitle("Stimulation with light increases average pause lengths in  \n animals expressing ReaChR in ADL and fed retinal overnight ") + 
   theme(plot.title=element_text(size=10))
 
 multcompLetters(reachrtukey.levels)['Letters']

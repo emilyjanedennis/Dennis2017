@@ -189,9 +189,10 @@ I completed a forward genetic screen with help from Wendy Wang in Shai Shaham's 
 
 ## Figure 1h
 ed03 == LBV003 in paper
-ed03 was our in-house name as it was the third mutant I (Emily Dennis) found
+ed03 was our in-house name as it was the third mutant I (__E__mily __D__ennis) found
 
 ```{r plotscreen}
+
 ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0)
 
 ```
