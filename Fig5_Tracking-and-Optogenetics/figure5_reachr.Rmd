@@ -1,0 +1,237 @@
+---
+title: "Figure 5 ReaChR experiments and analysis"
+author: "Emily Jane Dennis"
+date: "9/22/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Purpose:
+To plot all single animal tracking data for the optogenetics experiments in the manuscript.
+
+##Background:
+This is an R Markdown document. [See here for more details on using R Markdown](http://rmarkdown.rstudio.com). I also found [this site](http://rmarkdown.rstudio.com/authoring_basics.html ) was useful for learning basic formatting with Markdown. I also enjoyed [this site](http://seananderson.ca/2013/10/19/reshape.html) when learning how to use reshape and when learning how to reorganize my data in general.
+
+The commands required to produce these graphs is in the gray boxes, along with information on how to run the statistical tests reported in the paper and any plots that were used to determine if these statistical tests were generally appropriate.
+
+This was run in RStudio, using R version 3.3.1 (2016-10-31), Sincere Pumpkin Patch on a x86_64-apple-darwin13.4.0
+
+
+```{r dependencies,results='hide',message=FALSE}
+
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(MASS)
+library(ggthemes)
+library(car)
+library(multcompView)
+
+```
+
+
+
+```{r importdataframe}
+
+dfforplot <- read.csv('tracking_reachr.csv',header=TRUE)
+
+```
+
+
+```{r reformatdataforplotting}
+
+
+fx <- subset(dfforplot,treatment=='Fx')
+fr <- subset(dfforplot,treatment=='FR')
+xr <- subset(dfforplot,treatment=='xR')
+xx <- subset(dfforplot,treatment=='xx')
+
+frend <- fr$fra+fr$len
+fr <- cbind(fr,frend)
+xxend <- xx$fra+xx$len
+xx <- cbind(xx,xxend)
+xrend <- xr$fra+xr$len
+xr <- cbind(xr,xrend)
+fxend <- fx$fra+fx$len
+fx <- cbind(fx,fxend)
+
+fron <- subset(fr,lightlist=='im')
+froff <- subset(fr,lightlist=='FF')
+xxon <- subset(xx,lightlist=='im')
+xxoff <- subset(xx,lightlist=='FF')
+xron <- subset(xr,lightlist=='im')
+xroff <- subset(xr,lightlist=='FF')
+fxon <- subset(fx,lightlist=='im')
+fxoff <- subset(fx,lightlist=='FF')
+
+fxonsort <- fxon[ order(fxon$len), ]
+fxonsort$y <- c(1:dim(fxonsort)[1])
+fxonsort$yend <- c(1:dim(fxonsort)[1])
+fxoffsort <- fxoff[ order(fxoff$len), ]
+fxoffsort$y <- c(1:dim(fxoffsort)[1])
+fxoffsort$yend <- c(1:dim(fxoffsort)[1])
+
+fronsort <- fron[ order(fron$len), ]
+fronsort$y <- c(1:dim(fronsort)[1])
+fronsort$yend <- c(1:dim(fronsort)[1])
+froffsort <- froff[ order(froff$len), ]
+froffsort$y <- c(1:dim(froffsort)[1])
+froffsort$yend <- c(1:dim(froffsort)[1])
+
+xxonsort <- xxon[ order(xxon$len), ]
+xxonsort$y <- c(1:dim(xxonsort)[1])
+xxonsort$yend <- c(1:dim(xxonsort)[1])
+xxoffsort <- xxoff[ order(xxoff$len), ]
+xxoffsort$y <- c(1:dim(xxoffsort)[1])
+xxoffsort$yend <- c(1:dim(xxoffsort)[1])
+
+
+xronsort <- xron[ order(xron$len), ]
+xronsort$y <- c(1:dim(xronsort)[1])
+xronsort$yend <- c(1:dim(xronsort)[1])
+xroffsort <- xroff[ order(xroff$len), ]
+xroffsort$y <- c(1:dim(xroffsort)[1])
+xroffsort$yend <- c(1:dim(xroffsort)[1])
+
+
+m <- mean(dfforplot$len)
+sdm <- sd(dfforplot$len)
+minlength <- m+(3*sdm)
+
+above3sdofmean <- subset(dfforplot,len>minlength)
+xxabove <- subset(above3sdofmean,treatment=='xx')
+xrabove <- subset(above3sdofmean,treatment=='xR')
+fxabove <- subset(above3sdofmean,treatment=='Fx')
+frabove <- subset(above3sdofmean,treatment=='FR')
+```
+
+
+###plotting the histograms of all pauses
+Pauses from ADL::ReaChR animals fed retinal overnight are in red. Vertical lines indicate group means. 
+```{r histogramofpauses}
+
+ggplot(fronsort,aes(x=log((len)))) + 
+  geom_histogram(binwidth=.2,fill='red')+ 
+  geom_histogram(data=fxonsort,binwidth=.2,fill='black',alpha=0.5)+ 
+  geom_histogram(data=xxonsort,binwidth=.2,fill='black',alpha=0.5)+ 
+  geom_histogram(data=xronsort,binwidth=.2,fill='black',alpha=0.5) +
+  theme_tufte() + 
+  xlim(0,10) + 
+  geom_vline(xintercept=log(mean(fronsort$len)),color='red')+
+  geom_vline(xintercept=log(mean(fxonsort$len)),color='black')+ 
+  geom_vline(xintercept=log(mean(xxonsort$len)),color='black')+ 
+  geom_vline(xintercept=log(mean(xronsort$len)),color='black')
+
+```
+
+
+
+```{r preptoplot,warning=FALSE}
+
+levels(dfforplot$lightlist) <- c('OFF','ON')
+
+levels(dfforplot$treatment) <- c('ADL::ReaChR + retinal','ADL::ReaChR - retinal','wild type + retinal','wild type - retinal')
+
+casteddfforplot <- dcast(dfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+
+casteddfforplot$geno <- casteddfforplot$treatment
+casteddfforplot$ret <- casteddfforplot$treatment
+levels(casteddfforplot$geno) <- c('reachr','reachr','wildtype','wildtype')
+levels(casteddfforplot$ret) <- c('retinal','noretinal','retinal','noretinal')
+
+
+
+melteddfforplot <- melt(casteddfforplot,id.vars=c('treatment','datelist'),variable.name='lightlist',value.name='len')
+
+casteddfforplot$diff <- casteddfforplot$ON-casteddfforplot$OFF
+
+summarycast <- ddply(casteddfforplot,.(treatment),summarize,mean=mean(diff),sd=sd(diff),N=length(diff),se=sd(diff)/(sqrt(N)),mep=mean+se,mem=mean-se)
+
+recasteddfforplot <- dcast(melteddfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+recasteddfforplot$x = c(rep('OFF',length(recasteddfforplot$OFF)))
+recasteddfforplot$xend = c(rep('ON',length(recasteddfforplot$ON)))
+```
+
+```{r statstoplot}
+
+leveneTest(diff~geno*ret,data=casteddfforplot)
+
+toadd <- 1-min(casteddfforplot$diff)
+casteddfforplot$tnsl <- casteddfforplot$diff+toadd
+bcr <- boxcox(tnsl~geno*ret,data=casteddfforplot)
+
+#round up to nearest 0.5
+lambdar <- 0.5
+casteddfforplot$difflambdar <- casteddfforplot$tnsl^lambdar
+leveneTest(difflambdar~geno*ret,data=casteddfforplot)
+
+#rounding to the tails of the 95% confidence interval because lambda is near 0, compensates for heterogeneity
+
+reachrtukey <- TukeyHSD(aov(difflambdar~geno*ret,data=casteddfforplot))
+reachrtukey.levels <- reachrtukey$`geno:ret`[,4]
+
+
+reachrstatstoplot <- ddply(casteddfforplot,.(geno,ret,treatment),summarize,median=median(difflambdar),N=length(difflambdar),sd=sd(difflambdar),error=(qnorm(0.975)*sd/sqrt(N)),cim=median-error,cip=median+error)
+
+```
+
+```{r preptoplot2}
+
+levels(dfforplot$lightlist) <- c('OFF','ON')
+
+levels(dfforplot$treatment) <- c('ADL::ReaChR + retinal','ADL::ReaChR - retinal','wild type + retinal','wild type - retinal')
+
+casteddfforplot <- dcast(dfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+
+melteddfforplot <- melt(casteddfforplot,id.vars=c('treatment','datelist'),variable.name='lightlist',value.name='len')
+
+casteddfforplot$diff <- casteddfforplot$ON-casteddfforplot$OFF
+
+summarycast <- ddply(casteddfforplot,.(treatment),summarize,mean=mean(diff),sd=sd(diff),N=length(diff),se=sd(diff)/(sqrt(N)),mep=mean+se,mem=mean-se)
+
+recasteddfforplot <- dcast(melteddfforplot,treatment+datelist~lightlist,value.var='len',fun.aggregate=mean,na.rm=TRUE)
+recasteddfforplot$x = c(rep('OFF',length(recasteddfforplot$OFF)))
+recasteddfforplot$xend = c(rep('ON',length(recasteddfforplot$ON)))
+```
+
+
+###here I plotted the ON and OFF mean pause lengths separately with lines connected between means taken from the same plate. I then took the differences between these means to produce a single number (increase/decrease in pause length) which corrects for the baseline differences between plates/animals/days/treatments, and ran summary statistics on the differences.
+```{r plotofdiffs}
+
+ggplot(recasteddfforplot,aes(x=x,y=(OFF/3))) + 
+  geom_segment(aes(x=x,xend=xend,y=(OFF/3),yend=(ON/3))) +
+  geom_point(data=melteddfforplot,aes(x=lightlist,y=(len/3))) + 
+  theme_tufte() + 
+  facet_grid(~treatment)+ 
+  ylab("Mean pause length (seconds)")+ 
+  xlab("Light conditions") + 
+  ylim(0,15)
+
+ggplot(casteddfforplot,aes(x=treatment,y=diff)) + 
+  geom_jitter(width=0.2,height=0) + 
+  theme_tufte() + 
+  geom_point(data=summarycast,aes(x=treatment,y=mean),shape='-') + 
+  geom_point(data=summarycast,aes(x=treatment,y=mean+se),shape='-') + 
+  geom_point(data=summarycast,aes(x=treatment,y=mean-se),shape='-') + 
+  ylab("Mean differences in pause length (seconds)")+ 
+  xlab("treatment and genotype of animals tested") + 
+  ggtitle("Stimulation with light increases average pause lengths in  \n animals expressing ReaChR in ADL and fed retinal overnight ") + 
+  theme(plot.title=element_text(size=10))
+
+multcompLetters(reachrtukey.levels)['Letters']
+
+```
+
+Box GEP and Cox DR, An Analysis of Transformation.Journal of the Royal Statistical Society. Series B (Methodological), Vol. 26, No. 2. (1964), pp.
+211-252.
+
+http://links.jstor.org/sici?sici=0035-9246%281964%2926%3A2%3C211%3AAAOT%3E2.0.CO%3B2-6
+
+
+
+
+

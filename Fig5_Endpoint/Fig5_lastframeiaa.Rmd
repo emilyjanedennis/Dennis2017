@@ -1,0 +1,63 @@
+---
+title: "Plotting endpoint data for Figure 5"
+author: "Emily Jane Dennis"
+date: "12/29/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Purpose:
+To plot all end points for the single animal tracking experiments with isoamyl alcohol.
+
+##Background:
+This is an R Markdown document.  <http://rmarkdown.rstudio.com>.
+
+The code required to get these graphs is in the gray boxes, along with information on how to run the statistical tests reported in the paper and any plots that were used to determine if these statistical tests were generally appropriate.
+
+This was run in RStudio, using R version 3.3.1 (2016-10-31), Sincere Pumpkin Patch on a x86_64-apple-darwin13.4.0
+
+First, load libraries:
+```{r loadlib}
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(ggthemes)
+library(superheat)
+```
+
+Next, load and plot data. These data are the X, Y coordinates pulled from the last frame of each animal's tracked trajectory. This is either:
+  1. their location in the last frame of the video
+  2. if they exited the arena's trackable area
+  3. the odor source (if they reached the odor source, there was a small amount of a paralytic and therefore the animals are removed from further analysis and 'stuck' at the odor source, therefore their final X, Y location is the odor source)
+```{r loaddata}
+lasts <- read.csv('2018_lastframe.csv')
+
+ggplot(lasts,aes(x=xend,y=yend)) + geom_point(alpha=0.4) + xlim(0,2800) + ylim(0,2800) + theme_tufte() + facet_grid(~type)
+
+lastsforplot <- lasts
+lastsforplot$yend[lastsforplot$xend>2100] <- 'odor'
+lastsforplot$yend[lastsforplot$xend<2101] <- 'other'
+plylasts <- ddply(lastsforplot,.(type,video,yend),summarise,numinsection=length(xend))
+castlasts <- dcast(plylasts,type + video ~ yend)
+castlasts[is.na(castlasts)] <- 0
+castlasts$pct <- (castlasts$odor/(castlasts$odor+castlasts$other))*100
+
+
+nd <- subset(lasts,type=='nd')
+hist(nd$xend,breaks=c(0,700,1400,2100,2800))
+ne <- subset(lasts,type=='ne')
+hist(ne$xend,breaks=c(0,700,1400,2100,2800))
+sd <- subset(lasts,type=='sd')
+hist(sd$xend,breaks=c(0,700,1400,2100,2800))
+se <- subset(lasts,type=='se')
+hist(se$xend,breaks=c(0,700,1400,2100,2800))
+
+castlastsummary <- ddply(castlasts,.(type),summarise,avgpct=mean(pct),sdpct=sd(pct),N=length(pct),sem=sdpct/sqrt(N),mem=avgpct-sem,mep=avgpct+sem)
+
+ggplot(castlasts,aes(x=type,y=pct)) + geom_jitter(width=0.2,height=0) + geom_point(data=castlastsummary,aes(x=type,y=mep),shape="-") + geom_point(data=castlastsummary,aes(x=type,y=mem),shape="-") + geom_point(data=castlastsummary,aes(x=type,y=avgpct),shape="+") + theme_tufte()
+
+```

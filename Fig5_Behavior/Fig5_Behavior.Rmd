@@ -1,0 +1,51 @@
+---
+title: "Fig5_Behavior"
+author: "Emily Jane Dennis"
+date: "4/27/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Purpose:
+To plot behavior data from Figure 5f. These data are chemotaxis indices from wild-type animals chemotaxing on DEET-agar after 1, 2, 3, or 4 hours.
+
+##Background:
+This is an R Markdown document.  <http://rmarkdown.rstudio.com>.
+
+The scripts required to get these graphs is in the gray boxes, along with information on how to run the statistical tests reported in the manuscript.
+
+This was run in RStudio, using R version 3.3.1 (2016-10-31), Sincere Pumpkin Patch on a x86_64-apple-darwin13.4.0
+
+First, load libraries:
+```{r loadlibs, warning=FALSE,  message = FALSE}
+library(ggthemes)
+library(ggplot2)
+library(reshape2)
+library(plyr)
+library(dplyr)
+```
+
+```{r loadandplot}
+#load data
+timing <- read.csv('timingdata.csv')
+
+#generate summary data
+summarytiming <- ddply(timing,.(minutes),summarise,mean=mean(CI),N=length(CI),sd=sd(CI),sem=sd/sqrt(N))
+
+#plot
+ggplot(timing,aes(x=minutes/60,y=CI)) +
+  geom_jitter(height=0,width=.2,aes(alpha=0.5)) +
+  theme_tufte() + 
+  ylim(-1,1) +
+  geom_hline(yintercept=0) +
+  geom_point(data=summarytiming,aes(x=minutes/60,y=mean),shape="+") + 
+  geom_point(data=summarytiming,aes(x=minutes/60,y=mean+sem),shape="-") + 
+  geom_point(data=summarytiming,aes(x=minutes/60,y=mean-sem),shape="-") + 
+  theme(legend.position="none")
+
+
+```
