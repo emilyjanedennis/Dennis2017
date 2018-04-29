@@ -1,0 +1,361 @@
+---
+title: "Imaging"
+author: "Emily Jane Dennis"
+date: "9/22/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Purpose:
+To plot all ADL imaging data for manuscript.
+
+## R Markdown
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+The scripts required to get these graphs is in the gray boxes, along with information on how to run the statistical tests reported in the paper and  qqPlots that were used to determine if these statistical tests were generally appropriate.
+
+This was run in RStudio, using R version 3.3.1 (2016-10-31), Sincere Pumpkin Patch on a x86_64-apple-darwin13.4.0
+
+
+```{r dependencies}
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(ggthemes)
+library(superheat)
+```
+
+
+
+```{r c9adl}
+
+wd <- getwd()
+file_list <- list.files(paste(wd,'/c9adl/',sep=""))
+
+wdplus <- paste(wd,'/c9adl/',sep="")
+
+i=1
+
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+
+frame <- c(1:4680)
+animal <- c(1:dim(datafromfilelist)[1])
+video <- rep(i,dim(datafromfilelist)[1])
+
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+c9adl_df <- finaldf
+c9adl_df$stim <- rep('c9',dim(c9adl_df)[1])
+c9adl_df$geno <- rep('adl',dim(c9adl_df)[1])
+```
+
+```{r c9mut}
+
+file_list <- list.files(paste(wd,'/c9mut/',sep=""))
+
+wdplus <- paste(wd,'/c9mut/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+c9mut_df <- finaldf
+c9mut_df$stim <- rep('c9',dim(c9mut_df)[1])
+c9mut_df$geno <- rep('mut',dim(c9mut_df)[1])
+```
+
+```{r c9res}
+
+file_list <- list.files(paste(wd,'/c9res/',sep=""))
+
+wdplus <- paste(wd,'/c9res/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+c9res_df <- finaldf
+c9res_df$stim <- rep('c9',dim(c9res_df)[1])
+c9res_df$geno <- rep('res',dim(c9res_df)[1])
+```
+
+
+```{r pt0adl}
+
+file_list <- list.files(paste(wd,'/pt0adl/',sep=""))
+wdplus <- paste(wd,'/pt0adl/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+pt0adl_df <- finaldf
+pt0adl_df$stim <- rep('pt0',dim(pt0adl_df)[1])
+pt0adl_df$geno <- rep('adl',dim(pt0adl_df)[1])
+```
+
+```{r pt0mut}
+
+file_list <- list.files(paste(wd,'/pt0mut/',sep=""))
+
+wdplus <- paste(wd,'/pt0mut/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+pt0mut_df <- finaldf
+
+pt0mut_df$stim <- rep('pt0',dim(pt0mut_df)[1])
+pt0mut_df$geno <- rep('mut',dim(pt0mut_df)[1])
+```
+
+```{r pt0res}
+
+file_list <- list.files(paste(wd,'/pt0res/',sep=""))
+
+wdplus <- paste(wd,'/pt0res/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+pt0res_df <- finaldf
+
+pt0res_df$stim <- rep('pt0',dim(pt0res_df)[1])
+pt0res_df$geno <- rep('res',dim(pt0res_df)[1])
+```
+
+
+
+
+```{r pt15adl}
+
+file_list <- list.files(paste(wd,'/pt15adl/',sep=""))
+
+wdplus <- paste(wd,'/pt15adl/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+pt15adl_df <- finaldf
+
+pt15adl_df$stim <- rep('pt15',dim(pt15adl_df)[1])
+pt15adl_df$geno <- rep('adl',dim(pt15adl_df)[1])
+
+```
+
+```{r pt15mut}
+
+file_list <- list.files(paste(wd,'/pt15mut/',sep=""))
+
+wdplus <- paste(wd,'/pt15mut/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+pt15mut_df <- finaldf
+pt15mut_df$stim <- rep('pt15',dim(pt15mut_df)[1])
+pt15mut_df$geno <- rep('mut',dim(pt15mut_df)[1])
+```
+
+```{r pt15res}
+
+file_list <- list.files(paste(wd,'/pt15res/',sep=""))
+
+wdplus <- paste(wd,'/pt15res/',sep="")
+
+i=1
+frame <- c(1:1500)
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)
+datafromfilelist <- datafromfilelist[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- data
+
+for (i in 2:length(file_list)){
+  
+  
+animal <- rep(i,1500)
+datafromfilelist <- read.csv((paste(wdplus,file_list[i],sep="")),header=FALSE)[,2]
+arbitraryunits <- datafromfilelist-(min(datafromfilelist))
+data <- as.data.frame(cbind(animal,frame,arbitraryunits))
+finaldf <- rbind(finaldf,data)
+}
+pt15res_df <- finaldf
+pt15res_df$stim <- rep('pt15',dim(pt15res_df)[1])
+pt15res_df$geno <- rep('res',dim(pt15res_df)[1])
+
+```
+
+un-comment this section to save output as csv (these values were saved and added to the master excel file in the supplement)
+```{r savefile}
+df <- rbind(c9adl_df,c9mut_df,c9res_df,pt15adl_df,pt15mut_df,pt15res_df)
+#filetosave <- dcast(df,animal~frame,value.var='arbitraryunits')
+#write.csv(filetosave,'arbitraryunits.csv')
+```
+
+```{r plotpt15}
+
+ymax = max(df$arbitraryunits)
+p <- ggplot(pt15adl_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='gray') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('wild-type 0.15% DEET')
+
+
+p <- ggplot(pt15mut_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='red3') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('mutant 0.15% DEET')
+
+
+p <- ggplot(pt15res_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='black') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('rescue 0.15% DEET')
+
+```
+
+
+```{r plotc9}
+
+ymax = max(df$arbitraryunits)
+p <- ggplot(c9adl_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='gray') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('wild-type 100nM C9')
+
+
+p <- ggplot(c9mut_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='red3') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('mutant 100nM C9')
+
+
+p <- ggplot(c9res_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='black') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('rescue 100nM C9')
+
+```
+
+```{r plotpt0}
+
+ymax = max(c(pt0adl_df$arbitraryunits,pt0mut_df$arbitraryunits,pt0res_df$arbitraryunits))
+p <- ggplot(pt0adl_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='gray') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('wild-type ethanol solvent')
+
+
+p <- ggplot(pt0mut_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='red3') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('mutant ethanol solvent')
+
+
+p <- ggplot(pt0res_df,aes(x=frame,y=arbitraryunits)) + geom_line(color='black') + facet_grid(~animal) + theme_tufte()
+p + annotate("rect", xmin = 300, xmax = 500, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 1100, xmax = 1300, ymin = 0, ymax = ymax,alpha = .2)+ annotate("rect", xmin = 700, xmax = 900, ymin = 0, ymax = ymax,alpha = .2) + ylab('arbitrary units') + ggtitle('rescue ethanol solvent')
+
+```
