@@ -1,0 +1,343 @@
+// Neuron GCaMP Tracking
+// Andrew Gordus
+// November 5, 2011
+
+//Emily Dennis used with ImageJ v1.48	imagej.nih.gov/ij/.
+//
+// Start with thresholded stack.  Create ellipse around neuron.
+
+//title = "Untitled";
+//width=512; height=512;
+//Dialog.create("Name Extension");
+//Dialog.addString("Title:", title);
+//Dialog.show();
+//extension = Dialog.getString();
+// extension = "AVA";
+
+start = getTime;
+
+//--------------------------------------//
+// Open Files, Set Threshold and Select //
+// Neuron, Background and Dye locations //
+//--------------------------------------//
+
+
+dir = getDirectory("Choose a Directory ");
+list = getFileList(dir);
+k=0;
+newlist = newArray(list.length);
+for (i=0; i < list.length; i++)  {
+	if (endsWith(list[i], ".tif")) {
+	newlist[k] = list[i];
+	k=k+1;
+	}
+}
+list = Array.trim(newlist, k)
+
+
+Lower = newArray(list.length);
+XE = newArray(list.length);
+YE = newArray(list.length);
+WE = newArray(list.length);
+HE = newArray(list.length);
+XB = newArray(list.length);
+YB = newArray(list.length);
+XD = newArray(list.length);
+YD = newArray(list.length);
+
+
+
+for (file=0; file < list.length; file++)  {
+open(dir + list[file],1);
+run("In [+]");
+run("In [+]");
+
+run("Clear Results");
+
+// Go to beginning of stack
+setSlice(1);
+updateDisplay();
+run("Select None");
+
+run("Clear Results");
+// Set lower threshold limit
+run("Threshold...");
+do {
+	getThreshold(lower, upper);
+	} while (isKeyDown("space") != 1);
+setThreshold(lower, 65535);
+
+wait(100);
+
+// Create ellipse around neuron
+showStatus("Create Ellipse around neuron:");
+wait(1000);
+do {
+	// Measure selection parameters.
+	getSelectionBounds(x, y, w, h);
+	wait(100);
+	} while (isKeyDown("space") != 1);
+
+
+wait(100);
+
+
+// Choose background location
+showStatus("Select center background location:"); 
+do {
+	getCursorLoc(xb, yb, z, flags);
+	wait(100);
+} while (flags != 16);
+
+wait(100);
+
+// Choose dye location
+showStatus("Select Dye Location:"); 
+do {
+	getCursorLoc(xd, yd, z, flags);
+	wait(100);
+} while (flags != 16);
+
+Lower[file]=lower;
+XE[file]=x;
+YE[file]=y;
+WE[file]=w;
+HE[file]=h;
+XB[file]=xb;
+YB[file]=yb;
+XD[file]=xd;
+YD[file]=yd;
+
+wait(100);
+close();
+}
+
+//----------------------------//
+// Open Files and Record Data //
+//----------------------------//
+
+
+for (file=0; file < list.length; file++)  {
+// setBatchMode(true);
+open(dir + list[file]);
+rename("Movie_A");
+run("Clear Results");
+filename =getInfo("image.filename");
+filename =substring(filename,0,lengthOf(filename)-4);
+
+// Go to beginning of stack
+setSlice(1);
+updateDisplay();
+run("Select None");
+
+run("Clear Results");
+
+lower = Lower[file];
+x = XE[file];
+y = YE[file];
+w = WE[file];
+h = HE[file];
+xb = XB[file];
+yb = YB[file];
+xd = XD[file];
+yd = YD[file];
+
+
+wb = 10;
+hb = 10;
+
+// Defaults
+
+// Initialize variables
+area = 0; maxint = 0; intdens = 0; xc = x + 0.5*w; yc = y + 0.5*h; xp = xc; yp = yc; avg = 0; bgavg = 0; dx = 0; dy = 0;
+X = newArray(nSlices);
+Y = newArray(nSlices);
+Int1 = newArray(nSlices);
+Bg = newArray(nSlices);
+Avg = newArray(nSlices);
+Dye = newArray(nSlices);
+
+print("\\Clear");
+// print("Slice,avg,intdens, bgavg, maxint, dye, xc, yc, area");
+
+min_avg = 1000000;
+max_avg = 0;
+min_int = 10000000;
+max_int = 0;
+min_dye = 10000000;
+max_dye = 0;
+min_x = 10000000;
+max_x = 0;
+
+run("Threshold...");
+setThreshold(lower, 65535);
+
+run("Clear Results");
+for (slice=1; slice<=nSlices; slice++)  {
+	run("Clear Results");
+	setSlice(slice);
+	makeOval(xc - 0.5*w, yc - 0.5*h, w, h);
+	run("Set Measurements...", "area min centroid center integrated slice limit redirect=None decimal=3");
+	if (slice == 1) {
+		run("Analyze Particles...", "size=1-Infinity circularity=0.00-1.00 show=Nothing display clear slice");
+		if (nResults == 1) {
+		start_area = getResult("Area", 0);
+		good = 0;
+		}
+		if (nResults > 1) {
+			start_area = 0;
+			for (result=0; result<nResults; result++)  {
+				area = getResult("Area", result);
+				if (area > start_area) {
+					start_area = area;
+					good = result;
+				}
+			}
+		}
+	}else {
+		small = 10; // 0.75*start_area;
+		large = 1.25*start_area;
+		run("Analyze Particles...", "size=small-Infinity circularity=0.00-1.00 show=Nothing display clear slice");
+		if (nResults == 1) {
+		area = getResult("Area", 0);
+		good = 0;
+		}
+		if (nResults > 1) {
+			area = 0;
+			for (result=0; result<nResults; result++)  {
+				test_area = getResult("Area", result);
+				if (test_area > area) {
+					area = test_area;
+					good = result;
+				}
+			}
+		}
+		if (nResults < 1) {
+			area = 0;
+		}
+		
+		while (area > start_area) {
+			lower = lower + 1;
+			setThreshold(lower, 65535);
+			makeOval(xc - 0.5*w, yc - 0.5*h, w, h);
+			run("Analyze Particles...", "size=small-Infinity circularity=0.00-1.00 show=Nothing display clear slice");
+			if (nResults == 1) {
+				area = getResult("Area", 0);
+				good = 0;
+			}
+			if (nResults > 1) {
+				area = 0;
+				for (result=0; result<nResults; result++)  {
+					test_area = getResult("Area", result);
+					if (test_area > area) {
+						area = test_area;
+						good = result;
+					}
+				}
+			}
+			
+		}
+		while (area < start_area) {
+			lower = lower - 1;
+			setThreshold(lower, 65535);
+			makeOval(xc - 0.5*w, yc - 0.5*h, w, h);
+			run("Analyze Particles...", "size=small-Infinity circularity=0.00-1.00 show=Nothing display clear slice");
+			if (nResults == 1) {
+				result = 0;
+				area = getResult("Area", result);
+				good = 0;
+			}
+			if (nResults > 1) {
+				area = 0;
+				for (result=0; result<nResults; result++)  {
+					test_area = getResult("Area", result);
+					if (test_area > area) {
+						area = test_area;
+						good = result;
+					}
+				}
+			}
+			if (nResults < 1) {
+				area = 0;
+			}
+		}
+
+	}
+	xc = getResult("XM", good);
+	yc = getResult("YM", good);
+	area = getResult("Area", good);
+	maxint = getResult("Max", good);
+	intdens = getResult("IntDen", good);
+	avg = intdens / area;
+	makeOval(xb - 0.5*wb, yb - 0.5*hb, wb, hb);
+	run("Clear Results");
+	run("Set Measurements...", "area mean min median slice redirect=None decimal=3");
+	run("Measure");
+	if (nResults == 1) {
+		bgavg = getResult("Mean", 0);
+	}
+	makeRectangle(xd - 0.5*wb, yd - 0.5*hb, wb, hb);
+	run("Clear Results");
+	run("Set Measurements...", "area mean min median slice redirect=None decimal=3");
+	run("Measure");
+	if (nResults == 1) {
+		dye = getResult("Mean", 0);
+	}
+	
+	print(slice+","+avg+","+intdens+","+bgavg+","+maxint+","+dye+","+xc+","+yc+","+area);
+	X[slice-1]=xc;
+	Y[slice-1]=yc;
+	Int1[slice-1]= intdens - bgavg*area;
+	Bg[slice-1]=bgavg;
+	Avg[slice-1]=avg-bgavg;
+	Dye[slice-1]=dye;
+	if (avg-bgavg > max_avg){max_avg = avg-bgavg;}
+	if (avg-bgavg < min_avg){min_avg = avg-bgavg;}
+	if (intdens - bgavg*area > max_int){max_int = intdens - bgavg*area;}
+	if (intdens - bgavg*area < min_int){min_int = intdens - bgavg*area;}
+	if (dye > max_dye){max_dye = dye;}
+	if (dye < min_dye){min_dye = dye;}
+	if (xc > max_x){max_x = xc;}
+	if (xc < min_x){min_x = xc;}
+	//Velocity prediction
+	dx = xc-xp; dy = yc-yp;
+	xp = xc; yp = yc;
+	xc = xc + dx; yc = yc+dy;
+	xb = xb + dx; yb = yb+dy;
+	// wait(1000);
+}
+selectWindow("Movie_A");
+close();
+wait(100);
+
+setBatchMode(false);
+
+//Plot.create(filename+extension, "Frame", "Intensity");
+Plot.create(filename, "Frame", "Intensity");
+Plot.setLimits(0, slice, min_avg, max_avg);
+Plot.setColor("blue");
+Plot.add("line", Avg);
+Plot.setColor("blue");
+Plot.show();
+
+
+Plot.create (filename+"X", "Frame", "Pixel");
+Plot.setLimits(0, slice, min_x, max_x);
+Plot.setColor("blue");
+Plot.add("line", X);
+Plot.setColor("blue");
+Plot.show();
+
+
+selectWindow("Log");
+//save(dir+filename+extension+".txt");
+save(dir+filename+".txt");
+wait(100);
+}
+
+end = getTime();
+time = (end-start)/60000;
+showStatus("Time = "+time+" minutes");
+print("Time = "+time+" minutes");
+
+beep();

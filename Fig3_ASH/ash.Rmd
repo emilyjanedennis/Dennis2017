@@ -1,0 +1,34 @@
+---
+title: "ASH"
+author: "Emily Jane Dennis"
+date: "4/9/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loadlibraries}
+#load necessary libraries
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(ggthemes)
+```
+
+```{r importdata}
+ash <- read.csv('ASH_deltaFoverFmax.csv')
+meltedash <- melt(ash)
+summaryash <- ddply(meltedash,.(variable),summarize,mean=mean(value),N=length(value),sd=sd(value),sem=sd/sqrt(N))
+```
+
+```{r plot}
+ggplot(meltedash,aes(x=variable,y=value)) + geom_jitter(alpha=0.5,width=0,height=0) + geom_point(data=summaryash,aes(x=variable,y=mean),shape='+') + geom_point(data=summaryash,aes(x=variable,y=mean+sem),shape='-')+ geom_point(data=summaryash,aes(x=variable,y=mean-sem),shape='-')+ theme_tufte() + geom_hline(yintercept=0) + geom_segment(data=ash,aes(x='ethanol',xend='deet',y=ethanol,yend=deet))
+```
+
+
+```{r stats}
+t.test(ash$ethanol,ash$deet,paired=TRUE)
+```

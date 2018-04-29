@@ -1,0 +1,29 @@
+%This is an update version of Manuel's GCaMP analysis function
+
+function [deltaF1,deltaF1n,x1,time,dye] = GCaMP_ImageJ_Single(name)
+
+data = load(name);
+
+time = data(:,1)*0.1;
+Isub1=data(:,2);   %avg
+
+for m=1:length(Isub1)
+    if Isub1(m) < 0
+        Isub1(m) = 1;
+    end
+end
+
+Isub1 = bleachcorrect(Isub1, 100,200);
+k=sort(Isub1);
+F01 = nanmean(k(1:76)); % lowest 5%
+deltaF1=((Isub1-F01)/F01)*100;
+
+deltaF1n = deltaF1./max(deltaF1);
+
+dye = data(:,6);
+dye = (dye - min(dye));
+dye = dye./max(dye);
+
+deltaF1n = deltaF1./max(deltaF1);
+
+x1 = data(:,7);

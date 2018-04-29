@@ -1,0 +1,367 @@
+---
+title: "imaging_analysis"
+author: "Emily Jane Dennis"
+date: "5/26/2017"
+output: pdf_document
+---
+
+updated 9/22/2017
+updated with new unc imaging data 04/27/2018
+
+
+##Purpose:
+To plot all ADL imaging data for manuscript.
+
+##Background:
+This is an R Markdown document.  <http://rmarkdown.rstudio.com>.
+
+The scripts required to get these graphs is in the gray boxes, along with information on how to run the statistical tests reported in the manuscript.
+
+This was run in RStudio, using R version 3.3.1 (2016-10-31), Sincere Pumpkin Patch on a x86_64-apple-darwin13.4.0
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+First, load libraries:
+```{r loadlibs, warning=FALSE,  message = FALSE}
+library(ggthemes)
+library(ggplot2)
+library(multcompView)
+library(reshape2)
+library(plyr)
+library(dplyr)
+```
+
+Then, load data and add a column called 'frames' from 1:1500 (at 10fps, 150s experiment is 1500 frames)
+```{r loadandprepdata}
+
+frames <- c(1:1500)
+
+adlc9f <- read.csv('smoothed_dfoverfmax/adlgcamp_c9_smooth5F.csv',header=FALSE)
+adlc9f <- cbind(frames, adlc9f)
+
+adlpt0f <- read.csv('smoothed_dfoverfmax/adlgcamp_solvent_smooth5F.csv',header=FALSE)
+adl0f <- cbind(frames, adlpt0f)
+
+adlpt15f <- read.csv('smoothed_dfoverfmax/adlgcamp_pt15DEET_smooth5F.csv',header=FALSE)
+adl15f <- cbind(frames, adlpt15f)
+
+mutc9f <- read.csv('smoothed_dfoverfmax/mutantgcamp_c9_smooth5F.csv',header=FALSE)
+mutc9f <- cbind(frames, mutc9f)
+
+mutpt0f <- read.csv('smoothed_dfoverfmax/mutantgcamp_solvent_smooth5F.csv',header=FALSE)
+mut0f <- cbind(frames, mutpt0f)
+
+mutpt15f <- read.csv('smoothed_dfoverfmax/mutantgcamp_pt15DEET_smooth5F.csv',header=FALSE)
+mut15f <- cbind(frames, mutpt15f)
+
+resc9f <- read.csv('smoothed_dfoverfmax/rescuegcamp_c9_smooth5F.csv',header=FALSE)
+resc9f <- cbind(frames, resc9f)
+
+respt0f <- read.csv('smoothed_dfoverfmax/rescuegcamp_solvent_smooth5F.csv',header=FALSE)
+res0f <- cbind(frames, respt0f)
+
+respt15f <- read.csv('smoothed_dfoverfmax/rescuegcamp_pt15DEET_smooth5F.csv',header=FALSE)
+res15f <- cbind(frames, respt15f)
+
+
+
+
+unc13f <- read.csv('smoothed_dfoverfmax/unc13_smooth5F.csv',header=FALSE)
+unc13 <- cbind(frames, unc13f)
+
+unc31f <- read.csv('smoothed_dfoverfmax/unc31_smooth5F.csv',header=FALSE)
+unc31 <- cbind(frames, unc31f)
+
+wtuncf <- read.csv('smoothed_dfoverfmax/wt_smooth5F.csv',header=FALSE)
+wtunc <- cbind(frames, wtuncf)
+
+
+
+```
+
+To format each dataframe for analysis I completed the following steps:
+
+  1. 'Melted' the data frame: I in the .csv file, each column represents a single animal. Melting these data takes each column and assigns it a variable name (V1, V2...) and then moves each variable into the 'variable' column and each value into the 'value' column. This allows for easier handling later.
+  
+  2. Subset to keep only frames 300-500 (30-50s, or the first pulse of stimulus)
+  
+  3. Extract the mean value for each animal during this 30-50s period
+  
+  4. Add these data to a new data frame and label it with the genotype and treatment.
+  
+I repeated the above formatting 1-4 for all 0.15% DEET data:
+```{r chunk15f}
+meltadl15f <- melt(adl15f,id.vars = c('frames'))
+first <- subset(meltadl15f,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('adl',length(x))
+z= rep(15,length(x))
+dfadl15 <- data.frame(x,y,z)
+
+meltmut15f <- melt(mut15f,id.vars = c('frames'))
+first <- subset(meltmut15f,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)[1:17]
+y= rep('mut',length(x))
+z= rep(15,length(x))
+dfmut15 <- data.frame(x,y,z)
+
+
+meltrescue15f <- melt(res15f,id.vars = c('frames'))
+first <- subset(meltrescue15f,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('rescue',length(x))
+z= rep(15,length(x))
+dfrescue15 <- data.frame(x,y,z)
+
+
+
+```
+
+I repeated the above formatting 1-4 for all 100nM C9 data:
+```{r chunkc9f}
+meltadlc9f <- melt(adlc9f,id.vars = c('frames'))
+first <- subset(meltadlc9f,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('adl',length(x))
+z= rep(100,length(x))
+dfadlc9 <- data.frame(x,y,z)
+
+meltmutc9f <- melt(mutc9f,id.vars = c('frames'))
+first <- subset(meltmutc9f,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('mut',length(x))
+z= rep(100,length(x))
+dfmutc9 <- data.frame(x,y,z)
+
+
+meltrescuec9f <- melt(resc9f,id.vars = c('frames'))
+first <- subset(meltrescuec9f,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('rescue',length(x))
+z= rep(100,length(x))
+dfrescuec9 <- data.frame(x,y,z)
+
+```
+
+
+I repeated the above formatting 1-4 for all unc- imaging data:
+```{r chunkc9f}
+meltwtunc <- melt(wtunc,id.vars = c('frames'))
+first <- subset(meltwtunc,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('wtunc',length(x))
+z= rep(15,length(x))
+dfwtunc <- data.frame(x,y,z)
+
+meltunc13 <- melt(unc13,id.vars = c('frames'))
+first <- subset(meltunc13,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('unc13',length(x))
+z= rep(15,length(x))
+dfunc13 <- data.frame(x,y,z)
+
+
+meltunc31 <- melt(unc31,id.vars = c('frames'))
+first <- subset(meltunc31,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('unc31',length(x))
+z= rep(15,length(x))
+dfunc31 <- data.frame(x,y,z)
+
+```
+
+I repeated the above formatting 1-4 for all solvent data:
+This was a separate control experiment not reported in the paper which looks at ADL responses (or lack thereof) to solvent (ethanol) and/or  switching between stimuli.
+```{r chunk0f}
+
+meltadl0 <- melt(adl0f,id.vars = c('frames'))
+first <- subset(meltadl0,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('adl',length(x))
+z= rep(0,length(x))
+dfadl0 <- data.frame(x,y,z)
+
+meltmut0 <- melt(mut0f,id.vars = c('frames'))
+first <- subset(meltmut0,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('mut',length(x))
+z= rep(0,length(x))
+dfmut0 <- data.frame(x,y,z)
+
+
+meltrescue0f <- melt(res0f,id.vars = c('frames'))
+first <- subset(meltrescue0f,frames>300)
+first <- subset(first,frames<500)
+firstmean <- ddply(first,c('variable'),summarise,mean=mean(value,na.rm=TRUE))
+x = (firstmean$mean)
+y= rep('rescue',length(x))
+z= rep(0,length(x))
+dfrescue0 <- data.frame(x,y,z)
+
+```
+
+
+I then made a new data frame with all of these summary data together, and also calculated the mean and standard error for plotting. I also loaded pre-processed (through another script) new panels containing data for an experiment testing 0.15% DEET sensitivity in unc-13, unc-31, and control animals (wild type).
+```{r combineandplot}
+dftoplot_unc <- rbind(dfunc31,dfunc13,dfwtunc)
+dftoplot_deet <- rbind(dfadl15,dfmut15,dfrescue15)
+dftoplot_deet <- dftoplot_deet[complete.cases(dftoplot_deet), ]
+dftoplot_c9 <- rbind(dfadlc9,dfmutc9,dfrescuec9)
+
+#calculate means, standard deviation, and standard error
+deetmeanstoplot <- ddply(dftoplot_deet,c('y','z'),summarise,means=mean(x,na.rm = TRUE),N=length(x),sd=sd(x,na.rm=TRUE),se=(sd/sqrt(N)))
+c9meanstoplot <- ddply(dftoplot_c9,c('y','z'),summarise,means=mean(x,na.rm = TRUE),N=length(x),sd=sd(x,na.rm=TRUE),se=(sd/sqrt(N)))
+uncmeanstoplot <- ddply(dftoplot_unc,c('y','z'),summarise,means=mean(x,na.rm = TRUE),N=length(x),sd=sd(x,na.rm=TRUE),se=(sd/sqrt(N)))
+
+#plot unc data
+ggplot(dftoplot_unc,aes(x=y,y=x)) + 
+  geom_jitter(height=0,width=0.1) + 
+  geom_point(data=uncmeanstoplot,aes(x=y,y=means),shape='+') +
+  geom_point(data=uncmeanstoplot,aes(x=y,y=means+se),shape='-') +
+  geom_point(data=uncmeanstoplot,aes(x=y,y=means-se),shape='-') +
+  theme_tufte() + 
+  ylim(0,1)
+
+#plot deet data
+ggplot(dftoplot_deet,aes(x=y,y=x)) + 
+  geom_jitter(height=0,width=0.1) + 
+  geom_point(data=deetmeanstoplot,aes(x=y,y=means),shape='+') +
+  geom_point(data=deetmeanstoplot,aes(x=y,y=means+se),shape='-') +
+  geom_point(data=deetmeanstoplot,aes(x=y,y=means-se),shape='-') +
+  theme_tufte() + 
+  ylim(0,1) 
+
+#plot c9 data
+ggplot(dftoplot_c9,aes(x=y,y=x)) + 
+  geom_jitter(height=0,width=0.1) + 
+  geom_point(data=c9meanstoplot,aes(x=y,y=means),shape='+') +
+  geom_point(data=c9meanstoplot,aes(x=y,y=means+se),shape='-') +
+  geom_point(data=c9meanstoplot,aes(x=y,y=means-se),shape='-') +
+  theme_tufte() + 
+  ylim(0,1)
+
+#statistics: first need to convert y to factors
+dftoplot_deet$y <- as.factor(dftoplot_deet$y)
+imagingtukeydeet <- TukeyHSD(aov(x~y,dftoplot_deet))
+imagingtukeydeet.levels <- imagingtukeydeet$y[,4]
+multcompLetters(imagingtukeydeet.levels)['Letters']
+
+#statistics: first need to convert y to factors
+dftoplot_c9$y <- as.factor(dftoplot_c9$y)
+imagingtukeyc9 <- TukeyHSD(aov(x~y,dftoplot_c9))
+imagingtukeyc9.levels <- imagingtukeyc9$y[,4]
+multcompLetters(imagingtukeyc9.levels)['Letters']
+
+#statistics: first need to convert y to factors
+dftoplot_unc$y <- as.factor(dftoplot_unc$y)
+imagingtukeyunc <- TukeyHSD(aov(x~y,dftoplot_unc))
+imagingtukeyunc.levels <- imagingtukeyunc$`y`[,4]
+multcompLetters(imagingtukeyunc.levels)['Letters']
+
+```
+
+
+
+```{r heatmapplot}
+
+adl15mf <- t(adl15f)
+res15mf <- t(res15f)
+mut15mf <- t(mut15f)
+adl0mf <- t(adl0f)
+res0mf <- t(res0f)
+mut0mf <- t(mut0f)
+adl100mf <- t(adlc9f)
+res100mf <- t(resc9f)
+mut100mf <- t(mutc9f)
+unc13mf <- t(unc13)
+unc31mf <- t(unc31)
+wtuncmf <- t(wtunc)
+
+row.names(unc13mf) <- c('frames','unc130001','unc130002','unc130003','unc130004','unc130005','unc130006','unc130007','unc130008','unc130009','unc1300010','unc1300011','unc1300012','unc1300013','unc1300014')
+
+row.names(unc31mf) <- c('frames','unc310001','unc310002','unc310003','unc310004','unc310005','unc310006','unc310007','unc310008','unc310009','unc3100010','unc3100011','unc3100012','unc3100013','unc3100014')
+
+row.names(wtuncmf) <- c('frames','wtunc0001','wtunc0002','wtunc0003','wtunc0004','wtunc0005','wtunc0006','wtunc0007','wtunc0008','wtunc0009','wtunc00010','wtunc00011','wtunc00012','wtunc00013','wtunc00014')
+
+
+
+row.names(adl0mf) <- c('frames','adl01','adl0002','adl0003','adl0004','adl0005','adl0006','adl0007','adl0008','adl0009','adl00010','adl00011','adl00012','adl00013')
+row.names(res0mf) <- c('frames','res0001','res0002','res0003','res0004','res0005','res0006','res0007','res0008')
+row.names(mut0mf) <- c('frames','mut0001','mut0002','mut0003','mut0004','mut0005','mut0006','mut0007','mut0008','mut0009','mut00010','mut00011','mut00012','mut00013')
+
+row.names(adl15mf) <- c('frames','adl15-1','adl15-2','adl15-3','adl15-4','adl15-5','adl15-6','adl15-7','adl15-8','adl15-9','adl15-10','adl15-11','adl15-12','adl15-13','adl15-14')
+row.names(res15mf) <- c('frames','res15-1','res15-2','res15-3','res15-4','res15-5','res15-6','res15-7','res15-8','res15-9','res15-10','res15-11','res15-12','res15-13')
+row.names(mut15mf) <- c('frames','mut15-1','mut15-2','mut15-3','mut15-4','mut15-5','mut15-6','mut15-7','mut15-8','mut15-9','mut15-10','mut15-11','mut15-12','mut15-13','mut15-14','mut15-15','mut15-16','mut15-17','mut15-18')
+
+row.names(adl100mf) <- c('frames','adl100-1','adl100-2','adl100-3','adl100-4','adl100-5','adl100-6','adl100-7','adl100-8','adl100-9','adl100-10','adl100-11','adl100-12','adl100-13','adl100-14','adl100-15')
+row.names(res100mf) <- c('frames','res100-1','res100-2','res100-3','res100-4','res100-5','res100-6','res100-7','res100-8','res100-9','res100-10','res100-11','res100-12','res100-13')
+row.names(mut100mf) <- c('frames','mut100-1','mut100-2','mut100-3','mut100-4','mut100-5','mut100-6','mut100-7','mut100-8','mut100-9','mut100-0','mut100-1','mut100-2','mut100-3')
+
+
+
+#sort by greatest increase in first 10 seconds of pulse vs previous 10 seconds (plotted values)
+
+sortvectorforunc31 <- rowMeans(unc31mf[,201:300]) - rowMeans(unc31mf[,301:400])
+unc31mf2 <- unc31mf[order(sortvectorforunc31),]
+
+sortvectorforunc13 <- rowMeans(unc13mf[,201:300]) - rowMeans(unc13mf[,301:400])
+unc13mf2 <- unc13mf[order(sortvectorforunc13),]
+
+sortvectorforwtunc <- rowMeans(wtuncmf[,201:300]) - rowMeans(wtuncmf[,301:400])
+wtuncmf2 <- wtuncmf[order(sortvectorforwtunc),]
+
+
+
+sortvectorforadlf <- rowMeans(adl15mf[,201:300]) - rowMeans(adl15mf[,301:400])
+adl15mf2 <- adl15mf[order(sortvectorforadlf),]
+
+sortvectorformutf <- rowMeans(mut15mf[,201:300]) - rowMeans(mut15mf[,301:400])
+mut15mf2 <- mut15mf[order(sortvectorformutf),]
+
+sortvectorforresf <- rowMeans(res15mf[,201:300]) - rowMeans(res15mf[,301:400])
+res15mf2 <- res15mf[order(sortvectorforresf),]
+
+allf <- rbind(adl15mf,mut15mf,res15mf,adl100mf,mut100mf,res100mf,unc13mf,unc31mf,wtuncmf)
+subfullf<- allf[,101:1500]
+
+allf <- t(subfullf)
+allf2 <- melt(allf)
+names(allf2) <- c('frames','animal','value')
+
+allf3 <- subset(allf2,animal!='frames')
+
+```
+
+```{r plottingall}
+
+# load custom palette for plotting
+matlabrainbow <- c('#00008f','#002fff','#00dfff','#7fff7f','#ffcf00','#ff1f00','#7f0000')
+
+ggplot(allf3, aes(frames, animal)) + geom_tile(aes(fill = value)) + scale_fill_gradientn(values=c(0, .7, .85, 1), colours=t(matlabrainbow))
+```
+
+
